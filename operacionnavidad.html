@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operación Navidad: Protocolo Regalo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Quicksand:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: radial-gradient(circle, #1a472a 0%, #072b1a 100%);
+            overflow-x: hidden;
+            color: #fff;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        h1, h2 {
+            font-family: 'Mountains of Christmas', cursive;
+        }
+
+        .snow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            position: relative;
+            z-index: 20;
+        }
+
+        .btn-christmas {
+            background: linear-gradient(135deg, #d42426 0%, #a21b1d 100%);
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 15px rgba(212, 36, 38, 0.4);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .btn-christmas:active {
+            transform: scale(0.95);
+        }
+
+        .btn-christmas:disabled {
+            opacity: 0.5;
+            cursor: wait;
+            filter: grayscale(0.8);
+        }
+
+        .number-box {
+            background: rgba(0, 0, 0, 0.3);
+            border: 4px dashed rgba(239, 68, 68, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .number-active {
+            border-color: #ef4444;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.6);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .card-animation {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+
+    <canvas class="snow" id="snowCanvas"></canvas>
+
+    <div class="container max-w-2xl w-full">
+        <div class="glass-panel rounded-3xl p-8 text-center overflow-hidden">
+            <!-- Header -->
+            <div class="mb-8">
+                <h1 class="text-6xl mb-2 text-red-500">Regalo Robado</h1>
+                <p class="text-green-400 font-bold tracking-widest uppercase text-xs">Protocolo 1011 - Operación SANTA</p>
+            </div>
+
+            <!-- Fase 1: Sorteo de Números -->
+            <div id="fase1" class="space-y-6">
+                <h2 class="text-3xl text-white">Sorteo de Infiltración</h2>
+                <p class="text-gray-300 text-sm">Cada participante debe extraer su número de posición.</p>
+                
+                <div class="flex justify-center items-center py-4">
+                    <div id="numberDisplay" class="number-box text-8xl font-bold w-40 h-40 flex items-center justify-center rounded-full text-white">
+                        ?
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <button id="btnSortear" onclick="generarNumero()" class="btn-christmas text-white px-10 py-4 rounded-full text-xl font-bold w-full max-w-xs uppercase tracking-wider">
+                        🎁 Extraer Número
+                    </button>
+                    <p class="text-sm font-bold text-gray-400 uppercase">Restantes: <span id="count" class="text-red-400">8</span> / 8</p>
+                </div>
+
+                <button id="btnContinuar" class="hidden mt-6 text-green-400 hover:text-green-300 text-xl font-bold underline" onclick="iniciarJuego()">
+                    Iniciar Fase de Acción ➔
+                </button>
+            </div>
+
+            <!-- Fase 2: El Juego -->
+            <div id="fase2" class="hidden space-y-6 card-animation">
+                <div class="flex justify-between items-center text-xs font-bold bg-black/40 p-4 rounded-xl border border-white/10">
+                    <span id="rondaLabel" class="text-red-400 uppercase tracking-widest">RONDA 1</span>
+                    <span class="text-green-400 uppercase tracking-widest text-right">ORDEN JUGADOR: <span id="currentPlayer" class="text-white text-lg">1</span> / 8</span>
+                </div>
+
+                <h2 id="actionTitle" class="text-4xl text-yellow-500">Misión Táctica</h2>
+                
+                <div id="actionCard" class="bg-black/30 p-8 rounded-2xl border border-white/10 min-h-[180px] flex items-center justify-center text-xl leading-relaxed">
+                    Presiona el botón para recibir órdenes...
+                </div>
+
+                <div class="pt-4">
+                    <button id="btnAccion" onclick="revelarAccion()" class="btn-christmas text-white px-10 py-5 rounded-full text-xl font-bold w-full max-w-xs uppercase tracking-widest">
+                        🎄 Revelar Acción
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fase Final -->
+            <div id="faseFinal" class="hidden space-y-6 card-animation">
+                <h2 class="text-6xl text-red-500">¡MISIÓN CUMPLIDA!</h2>
+                <div class="text-2xl text-yellow-500 py-6 px-4">
+                    Protocolo de extracción finalizado.<br>
+                    Es momento de abrir los suministros.
+                </div>
+                <button onclick="location.reload()" class="text-gray-400 hover:text-white underline text-sm">Reiniciar Sistema 1011</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Logica de Acciones
+        const baseAcciones = {
+            1: [
+                "🔄 **Intercambio Normal**: Cambia tu regalo normal con cualquier jugador.",
+                "⭐ **Captura de Bonus**: Toma un Bonus de la mesa o róbalo a un jugador.",
+                "⬅️ **Flanco Normal**: Todos pasan su regalo normal a la izquierda.",
+                "🛡️ **Ataque Térmico**: Roba un Bonus inmediatamente.",
+                "📦 **Suministros**: Cambia tu regalo normal y toma uno de los Bonus disponibles.",
+                "🎯 **Extracción Bonus**: Roba un Bonus y dáselo a otro; tú intercambias su regalo normal.",
+                "🗺️ **Desplazamiento**: Intercambia tu regalo normal con el jugador que esté sentado más lejos.",
+                "✨ **Vanguardia**: Si hay Bonus en la mesa tómalo, si no, róbalo a quien prefieras."
+            ],
+            2: [
+                "🤝 **El Gran Robo**: Intercambia los regalos normales de dos jugadores entre ellos.",
+                "💣 **Sabotaje Bonus**: Obliga a un jugador a devolver su Bonus a la mesa.",
+                "⚡ **Doble Vía**: Cambia tu regalo normal Y roba un Bonus a un jugador.",
+                "🚫 **Bloqueo Zona**: Ni tu regalo normal ni tu Bonus pueden ser robados en esta ronda.",
+                "🕵️ **Infiltración**: Elige a dos jugadores; ellos deben intercambiar sus Bonus obligatoriamente.",
+                "🔃 **Rotación Cruzada**: Los regalos normales rotan a la derecha, los Bonus rotan 5 lugares a la izquierda.",
+                "💸 **Confiscación**: Quita un Bonus a alguien y dáselo a quien no tenga ninguno.",
+                "🪞 **Efecto Espejo**: Debes ejecutar la misma acción que sacó el jugador anterior."
+            ],
+            3: [
+                "🎰 **Ruleta Rusa**: Todos los regalos Bonus vuelven a la mesa y tú los repartes como quieras.",
+                "🧨 **Atraco Maestro**: Tienes 10 segundos para intercambiar tu normal y tu Bonus con quien quieras.",
+                "🌫️ **Bomba de Humo**: Intercambia los regalos normales de 4 personas a tu elección.",
+                "🎤 **Última Palabra**: Tienes derecho a un robo final de cualquier Bonus al terminar el juego.",
+                "💎 **Blindaje Élite**: Tu Bonus es tuyo permanentemente hasta el final sin excepciones.",
+                "🎖️ **Impuesto de Guerra**: Elige a 3 personas; deben cambiar su regalo normal al de su derecha.",
+                "👻 **Regalo Fantasma**: Elige a un jugador; él debe cerrar los ojos e intercambiar su regalo con alguien al azar que tú señales.",
+                "🔥 **Protocolo SANTA**: Intercambia todo tu set (Normal + Bonus) con el de cualquier jugador."
+            ]
+        };
+
+        let availableNumbers = [1, 2, 3, 4, 5, 6, 7, 8];
+        let currentRound = 1;
+        let currentPlayer = 1;
+        let currentActions = [];
+
+        // --- FASE 1: SORTEO ---
+        function generarNumero() {
+            const display = document.getElementById('numberDisplay');
+            const btn = document.getElementById('btnSortear');
+            const countDisplay = document.getElementById('count');
+
+            if (availableNumbers.length === 0) return;
+
+            // Bloquear UI
+            btn.disabled = true;
+            display.classList.add('number-active');
+
+            let ticks = 0;
+            const maxTicks = 12;
+            
+            const timer = setInterval(() => {
+                display.innerText = Math.floor(Math.random() * 8) + 1;
+                ticks++;
+
+                if (ticks >= maxTicks) {
+                    clearInterval(timer);
+                    
+                    // Selección real
+                    const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+                    const finalNumber = availableNumbers.splice(randomIndex, 1)[0];
+                    
+                    display.innerText = finalNumber;
+                    display.classList.remove('number-active');
+                    countDisplay.innerText = availableNumbers.length;
+
+                    if (availableNumbers.length > 0) {
+                        btn.disabled = false;
+                    } else {
+                        btn.style.display = 'none';
+                        document.getElementById('btnContinuar').classList.remove('hidden');
+                    }
+                }
+            }, 70);
+        }
+
+        // --- FASE 2: ACCIONES ---
+        function iniciarJuego() {
+            document.getElementById('fase1').classList.add('hidden');
+            document.getElementById('fase2').classList.remove('hidden');
+            cargarRonda();
+        }
+
+        function cargarRonda() {
+            currentActions = [...baseAcciones[currentRound]];
+            // Mezclado aleatorio
+            currentActions.sort(() => Math.random() - 0.5);
+            
+            document.getElementById('rondaLabel').innerText = `RONDA ${currentRound}`;
+            document.getElementById('currentPlayer').innerText = currentPlayer;
+            document.getElementById('actionCard').innerText = "Presiona el botón para recibir órdenes...";
+        }
+
+        function revelarAccion() {
+            const card = document.getElementById('actionCard');
+            const btn = document.getElementById('btnAccion');
+
+            if (currentActions.length > 0) {
+                const rawAction = currentActions.pop();
+                card.innerHTML = rawAction.replace(/\*\*(.*?)\*\*/g, '<b class="text-white">$1</b>');
+                card.classList.add('card-animation');
+                setTimeout(() => card.classList.remove('card-animation'), 400);
+
+                if (currentPlayer < 8) {
+                    currentPlayer++;
+                    document.getElementById('currentPlayer').innerText = currentPlayer;
+                } else {
+                    // Fin de ronda
+                    if (currentRound < 3) {
+                        btn.innerText = "PREPARAR SIGUIENTE RONDA";
+                        btn.onclick = () => {
+                            currentRound++;
+                            currentPlayer = 1;
+                            cargarRonda();
+                            btn.innerText = "🎄 REVELAR ACCIÓN";
+                            btn.onclick = revelarAccion;
+                        };
+                    } else {
+                        btn.innerText = "FINALIZAR OPERACIÓN";
+                        btn.onclick = () => {
+                            document.getElementById('fase2').classList.add('hidden');
+                            document.getElementById('faseFinal').classList.remove('hidden');
+                        };
+                    }
+                }
+            }
+        }
+
+        // --- SISTEMA DE NIEVE ---
+        const canvas = document.getElementById('snowCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, snowflakes;
+
+        function initSnow() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            snowflakes = Array.from({ length: 80 }, () => ({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                r: Math.random() * 3 + 1,
+                d: Math.random() * 1
+            }));
+        }
+
+        function drawSnow() {
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.beginPath();
+            snowflakes.forEach(p => {
+                ctx.moveTo(p.x, p.y);
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2, true);
+                p.y += Math.cos(p.d) + 1 + p.r / 2;
+                p.x += Math.sin(p.d) * 1;
+                if (p.y > height) p.y = -10;
+                if (p.x > width) p.x = 0;
+                if (p.x < 0) p.x = width;
+            });
+            ctx.fill();
+            requestAnimationFrame(drawSnow);
+        }
+
+        window.addEventListener('resize', initSnow);
+        initSnow();
+        drawSnow();
+    </script>
+</body>
+</html>
