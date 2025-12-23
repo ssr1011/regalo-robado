@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magia Navideña: El Regalo Robado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Mountains+of+Christmas:wght@700&family=Quicksand:wght@400;700&display=swap');
+
+        body {
+            font-family: 'Quicksand', sans-serif;
+            background: radial-gradient(circle, #2d5a27 0%, #163214 100%);
+            overflow-x: hidden;
+            color: #fff;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        h1, h2 {
+            font-family: 'Mountains of Christmas', cursive;
+        }
+
+        .snow {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+            position: relative;
+            z-index: 20;
+        }
+
+        .btn-festive {
+            background: linear-gradient(135deg, #e53e3e 0%, #9b2c2c 100%);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: 0 4px 15px rgba(229, 62, 62, 0.4);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .btn-festive:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(229, 62, 62, 0.6);
+        }
+
+        .btn-festive:active {
+            transform: scale(0.95);
+        }
+
+        .btn-magic {
+            background: linear-gradient(135deg, #ecc94b 0%, #b7791f 100%);
+            animation: glow 2s infinite ease-in-out;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 5px #ecc94b; }
+            50% { box-shadow: 0 0 20px #ecc94b; }
+        }
+
+        .number-box {
+            background: rgba(255, 255, 255, 0.1);
+            border: 4px solid #ecc94b;
+            transition: all 0.3s ease;
+        }
+
+        .number-active {
+            transform: scale(1.1);
+            background: rgba(236, 201, 75, 0.2);
+            box-shadow: 0 0 30px rgba(236, 201, 75, 0.5);
+        }
+
+        .card-animation {
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px) scale(0.9); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center p-4">
+
+    <canvas class="snow" id="snowCanvas"></canvas>
+
+    <div class="container max-w-2xl w-full">
+        <div class="glass-panel rounded-3xl p-8 text-center overflow-hidden">
+            <!-- Encabezado Navideño -->
+            <div class="mb-8">
+                <h1 class="text-6xl mb-2 text-white drop-shadow-lg">El Regalo Mágico</h1>
+                <p class="text-yellow-400 font-bold tracking-widest uppercase text-xs">¡Una velada especial para 9 aventureros!</p>
+            </div>
+
+            <!-- Fase 1: Sorteo de Turnos -->
+            <div id="fase1" class="space-y-6">
+                <h2 class="text-3xl text-white">Descubre tu turno</h2>
+                <p class="text-gray-200 text-sm italic">Cada duende debe elegir un número para saber cuándo participará.</p>
+                
+                <div class="flex justify-center items-center py-4">
+                    <div id="numberDisplay" class="number-box text-8xl font-bold w-44 h-44 flex items-center justify-center rounded-2xl text-white shadow-inner">
+                        ?
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <button id="btnSortear" onclick="generarNumero()" class="btn-festive text-white px-10 py-4 rounded-full text-xl font-bold w-full max-w-xs uppercase tracking-wider">
+                        🎄 ¡Sacar Número!
+                    </button>
+                    <p class="text-sm font-bold text-white/80 uppercase">Espíritus restantes: <span id="count" class="text-yellow-400">9</span> / 9</p>
+                </div>
+
+                <button id="btnContinuar" class="hidden mt-6 text-white bg-green-600 hover:bg-green-500 px-6 py-2 rounded-lg font-bold transition-colors" onclick="iniciarJuego()">
+                    Comenzar la Magia ➔
+                </button>
+            </div>
+
+            <!-- Fase 2: El Juego -->
+            <div id="fase2" class="hidden space-y-6 card-animation">
+                <div class="flex justify-between items-center text-sm font-bold bg-white/10 p-4 rounded-2xl border border-white/20">
+                    <span id="rondaLabel" class="text-yellow-400 uppercase tracking-widest">PARTE 1</span>
+                    <span class="text-white uppercase tracking-widest text-right">TURNO DEL DUENDE: <span id="currentPlayer" class="text-yellow-400 text-2xl">1</span> / 9</span>
+                </div>
+
+                <div id="magicAlert" class="hidden bg-yellow-500/20 border border-yellow-400 p-3 rounded-lg text-yellow-200 font-bold text-sm animate-pulse">
+                    ✨ ¡UN MILAGRO NAVIDEÑO ESTÁ POR OCURRIR! ✨
+                </div>
+
+                <h2 id="actionTitle" class="text-4xl text-white">Tu Acción Mágica</h2>
+                
+                <div id="actionCard" class="bg-white/5 p-8 rounded-2xl border border-white/10 min-h-[200px] flex items-center justify-center text-xl leading-relaxed italic shadow-inner">
+                    ¡La estrella de Belén está buscando tu sorpresa!
+                </div>
+
+                <div class="pt-4">
+                    <button id="btnAccion" onclick="revelarAccion()" class="btn-festive text-white px-10 py-5 rounded-full text-xl font-bold w-full max-w-xs uppercase tracking-widest">
+                        🎁 Revelar Sorpresa
+                    </button>
+                </div>
+            </div>
+
+            <!-- Fase Final -->
+            <div id="faseFinal" class="hidden space-y-6 card-animation">
+                <h2 class="text-7xl text-white drop-shadow-md">¡FELIZ NAVIDAD!</h2>
+                <div class="text-2xl text-yellow-300 py-6 px-4">
+                    La magia ha terminado y todos tienen su regalo.<br>
+                    <span class="text-white font-bold">¡Es momento de compartirlos y celebrar!</span>
+                </div>
+                <button onclick="location.reload()" class="text-white/60 hover:text-white underline text-sm">Volver a empezar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Acciones actualizadas para 9 personas y temática navideña
+        const baseAcciones = {
+            1: [
+                "🔄 **Intercambio Amigo**: Cambia tu regalo por el de cualquier otra persona.",
+                "⭐ **Estrella Fugaz**: Toma un regalo extra de la mesa o robalo a alguien.",
+                "⬅️ **Viento del Norte**: Todos pasan su regalo principal un lugar a la izquierda.",
+                "🛡️ **Abrazo de Oso**: Quédate con tu regalo actual; nadie puede pedírtelo en este turno.",
+                "📦 **Taller de Santa**: Cambia tu regalo actual por uno nuevo.",
+                "🎯 **Generosidad**: Elige un regalo extra y dáselo a alguien; tú intercambia con esa persona tu principal.",
+                "🗺️ **Viaje del Trineo**: Cambia tu regalo con la persona que esté más lejos de ti.",
+                "✨ **Luz de Vela**: Si hay regalos extras en la mesa, toma uno. Si no, ¡pide el que más te guste!",
+                "🍪 **Merienda de Reno**: Intercambia tu regalo con el jugador #4 del sorteo."
+            ],
+            2: [
+                "🤝 **Duendes Traviesos**: Elige a dos personas para que intercambien sus regalos entre ellas.",
+                "💣 **Nieve Derretida**: Elige a alguien; debe dejar su regalo extra en la mesa.",
+                "⚡ **Chispas de Nieve**: Cambia tu regalo y elige a alguien para darle un extra.",
+                "🚫 **Cuento de Navidad**: Nadie puede tocar tus regalos durante toda esta ronda.",
+                "🕵️ **Regalo Oculto**: Elige a dos amigos; deben intercambiar sus regalos extra.",
+                "🔃 **Carrusel Mágico**: Los regalos principales rotan 3 lugares a la derecha y los extras a la izquierda.",
+                "💸 **Espíritu Navideño**: Quita un regalo extra a alguien y dáselo al que no tenga ninguno.",
+                "🪞 **Espejo de Hielo**: Tienes que hacer exactamente lo mismo que hizo la persona anterior.",
+                "🔔 **Cascabel**: Cambia tu regalo con la persona que tengas a tu derecha."
+            ],
+            3: [
+                "🎰 **Tormenta de Nieve**: ¡Todos los regalos extra vuelven al centro! Tú los repartes como quieras.",
+                "🧨 **Regalo de Último Minuto**: Tienes 10 segundos para cambiar cualquier regalo que veas.",
+                "🌫️ **Noche de Paz**: Intercambia los regalos de 3 personas de la forma que prefieras.",
+                "🎤 **Deseo Final**: Al terminar el juego, tienes derecho a robar un último regalo extra.",
+                "💎 **Cofre de Hielo**: Tus regalos quedan congelados contigo; nadie puede cambiártelos ya.",
+                "🎖️ **Baile de Galleta**: Todos deben pasar su regalo 2 lugares hacia la derecha.",
+                "👻 **Sorpresa del Grinch**: Elige a alguien; debe cerrar los ojos y cambiar su regalo con un extraño.",
+                "🔥 **Regalo de Scar**: Intercambia todos tus regalos (el principal y el extra) con quien quieras.",
+                "🌟 **Milagro Supremo**: Elige a cualquier jugador y cambia sus dos regalos con los de otro."
+            ]
+        };
+
+        const eventosMagicos = [
+            "✨ **MILAGRO**: ¡Todos los regalos principales rotan un lugar hacia la izquierda!",
+            "✨ **CANTOS**: Todos los que tengan un regalo extra deben dárselo a la persona de su derecha.",
+            "✨ **COPO DE NIEVE**: Los jugadores #1 y #9 intercambian sus lugares y sus regalos.",
+            "✨ **NIEVE ETERNA**: todos los jugadores con numero par intercambian a su derecha."
+        ];
+
+        let availableNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9];
+        let currentRound = 1;
+        let currentPlayer = 1;
+        let currentActions = [];
+
+        function generarNumero() {
+            const display = document.getElementById('numberDisplay');
+            const btn = document.getElementById('btnSortear');
+            const countDisplay = document.getElementById('count');
+            if (availableNumbers.length === 0) return;
+            btn.disabled = true;
+            display.classList.add('number-active');
+            let ticks = 0;
+            const timer = setInterval(() => {
+                display.innerText = Math.floor(Math.random() * 9) + 1;
+                ticks++;
+                if (ticks >= 12) {
+                    clearInterval(timer);
+                    const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+                    const finalNumber = availableNumbers.splice(randomIndex, 1)[0];
+                    display.innerText = finalNumber;
+                    display.classList.remove('number-active');
+                    countDisplay.innerText = availableNumbers.length;
+                    if (availableNumbers.length > 0) btn.disabled = false;
+                    else {
+                        btn.style.display = 'none';
+                        document.getElementById('btnContinuar').classList.remove('hidden');
+                    }
+                }
+            }, 70);
+        }
+
+        function iniciarJuego() {
+            document.getElementById('fase1').classList.add('hidden');
+            document.getElementById('fase2').classList.remove('hidden');
+            cargarRonda();
+        }
+
+        function cargarRonda() {
+            currentActions = [...baseAcciones[currentRound]];
+            currentActions.sort(() => Math.random() - 0.5);
+            document.getElementById('rondaLabel').innerText = `PARTE ${currentRound}`;
+            document.getElementById('currentPlayer').innerText = currentPlayer;
+            document.getElementById('actionCard').innerText = "¡La magia está preparando tu sorpresa!";
+            document.getElementById('magicAlert').classList.add('hidden');
+        }
+
+        function revelarAccion() {
+            const card = document.getElementById('actionCard');
+            const btn = document.getElementById('btnAccion');
+            const alert = document.getElementById('magicAlert');
+
+            if (currentActions.length > 0) {
+                const rawAction = currentActions.pop();
+                card.innerHTML = rawAction.replace(/\*\*(.*?)\*\*/g, '<b class="text-white underline decoration-yellow-400">$1</b>');
+                card.classList.add('card-animation');
+                setTimeout(() => card.classList.remove('card-animation'), 500);
+
+                if (currentPlayer < 9) {
+                    currentPlayer++;
+                    document.getElementById('currentPlayer').innerText = currentPlayer;
+                } else {
+                    if (currentRound < 3) {
+                        btn.innerText = "✨ LANZAR HECHIZO GLOBAL ✨";
+                        btn.classList.add('btn-magic');
+                        btn.onclick = () => {
+                            const evento = eventosMagicos[Math.floor(Math.random() * eventosMagicos.length)];
+                            card.innerHTML = `<span class="text-yellow-300 font-bold">${evento}</span>`;
+                            alert.classList.remove('hidden');
+                            btn.innerText = "PREPARAR PARTE " + (currentRound + 1);
+                            btn.classList.remove('btn-magic');
+                            btn.onclick = () => {
+                                currentRound++;
+                                currentPlayer = 1;
+                                cargarRonda();
+                                btn.innerText = "🎁 Revelar Sorpresa";
+                                btn.onclick = revelarAccion;
+                            };
+                        };
+                    } else {
+                        btn.innerText = "FINALIZAR CELEBRACIÓN";
+                        btn.onclick = () => {
+                            document.getElementById('fase2').classList.add('hidden');
+                            document.getElementById('faseFinal').classList.remove('hidden');
+                        };
+                    }
+                }
+            }
+        }
+
+        // --- SISTEMA DE NIEVE ---
+        const canvas = document.getElementById('snowCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, snowflakes;
+        function initSnow() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            snowflakes = Array.from({ length: 120 }, () => ({
+                x: Math.random() * width,
+                y: Math.random() * height,
+                r: Math.random() * 3 + 1,
+                d: Math.random() * 1
+            }));
+        }
+        function drawSnow() {
+            ctx.clearRect(0, 0, width, height);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+            ctx.beginPath();
+            snowflakes.forEach(p => {
+                ctx.moveTo(p.x, p.y);
+                ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2, true);
+                p.y += Math.cos(p.d) + 1 + p.r / 2;
+                p.x += Math.sin(p.d) * 1;
+                if (p.y > height) p.y = -10;
+                if (p.x > width) p.x = 0;
+            });
+            ctx.fill();
+            requestAnimationFrame(drawSnow);
+        }
+        window.addEventListener('resize', initSnow);
+        initSnow();
+        drawSnow();
+    </script>
+</body>
+</html>
